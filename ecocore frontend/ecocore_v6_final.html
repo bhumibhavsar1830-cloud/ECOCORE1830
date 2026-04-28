@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>EcoCore AI v6 — Industrial Energy Intelligence</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@300;400;600&family=Bebas+Neue&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --g:#B6FF4A;--g2:#CAFF6D;--g3:#7ACC00;
+  --y:#FFD600;--y2:#FFE566;
+  --r:#FF4444;--r2:#FF7777;
+  --ink:#040704;--ink2:#070C07;--ink3:#0C140C;
+  --p:#101810;--p2:#162016;--p3:#1C2A1C;
+  --smoke:#3A4A3A;--fog:#253025;
+  --w:#EDF5ED;
+  --bdr:rgba(182,255,74,0.1);--bdr2:rgba(182,255,74,0.22);
+}
+html{scroll-behavior:smooth;}
+body{font-family:'JetBrains Mono',monospace;background:var(--ink);color:var(--w);min-height:100vh;overflow-x:hidden;cursor:none;}
+#cur{width:7px;height:7px;background:var(--g);position:fixed;pointer-events:none;z-index:9999;border-radius:50%;transform:translate(-50%,-50%);}
+#cur2{width:30px;height:30px;border:1px solid var(--g);border-radius:50%;position:fixed;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:all 0.1s linear;opacity:0.7;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:var(--ink);}::-webkit-scrollbar-thumb{background:var(--g);opacity:0.4;}
+.gbg{position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(182,255,74,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(182,255,74,0.03) 1px,transparent 1px);background-size:52px 52px;}
+.orb{position:fixed;border-radius:50%;pointer-events:none;filter:blur(90px);z-index:0;}
+.o1{width:500px;height:500px;background:radial-gradient(circle,rgba(182,255,74,0.05),transparent 70%);top:-120px;left:-120px;}
+.o2{width:380px;height:380px;background:radial-gradient(circle,rgba(255,214,0,0.04),transparent 70%);bottom:-60px;right:-60px;}
+
+/* ── LOGIN ── */
+.lwrap{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;}
+.lbox{width:430px;background:var(--p);border:1px solid var(--bdr2);position:relative;overflow:hidden;animation:up 0.5s cubic-bezier(.16,1,.3,1);}
+@keyframes up{from{opacity:0;transform:translateY(28px);}to{opacity:1;transform:translateY(0);}}
+.ltop{height:3px;background:linear-gradient(90deg,var(--g3),var(--g),var(--y),var(--g));background-size:200%;animation:sh 3s linear infinite;}
+@keyframes sh{0%{background-position:0%;}100%{background-position:200%;}}
+.lbody{padding:46px 42px;}
+.llogo{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;letter-spacing:4px;}
+.llogo em{color:var(--g);font-style:normal;}
+.ltag{font-size:0.58rem;letter-spacing:4px;color:var(--smoke);margin-top:2px;margin-bottom:36px;}
+.lf{margin-bottom:16px;}
+.lf label{display:block;font-size:0.58rem;letter-spacing:3px;color:var(--g);margin-bottom:7px;text-transform:uppercase;}
+.lf input{width:100%;padding:12px 14px;background:var(--ink2);border:1px solid var(--bdr);color:var(--w);font-family:'JetBrains Mono',monospace;font-size:0.9rem;outline:none;transition:all 0.2s;}
+.lf input:focus{border-color:var(--g);background:var(--ink3);box-shadow:0 0 0 3px rgba(182,255,74,0.1);}
+.lbtn{width:100%;padding:14px;margin-top:8px;background:var(--g);border:none;color:var(--ink);font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:3px;cursor:pointer;transition:all 0.25s;}
+.lbtn:hover{background:var(--g2);box-shadow:0 8px 36px rgba(182,255,74,0.35);transform:translateY(-1px);}
+.lbtn:disabled{opacity:0.35;cursor:not-allowed;transform:none;box-shadow:none;}
+.lhint{margin-top:18px;padding:11px 13px;background:var(--ink2);border-left:2px solid var(--bdr2);font-size:0.62rem;color:var(--smoke);}
+.lhint span{color:var(--g);}
+.lerr{margin-bottom:13px;padding:10px 13px;background:rgba(255,68,68,0.08);border-left:2px solid var(--r);color:var(--r2);font-size:0.74rem;}
+
+/* ── NAV ── */
+.nav{position:sticky;top:0;z-index:500;height:54px;padding:0 18px;display:flex;align-items:center;gap:14px;background:rgba(4,7,4,0.94);border-bottom:1px solid var(--bdr);backdrop-filter:blur(20px);}
+.nlogo{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:3px;white-space:nowrap;}
+.nlogo em{color:var(--g);font-style:normal;}
+.nlogo sup{font-family:'JetBrains Mono',monospace;font-size:0.38rem;color:var(--smoke);vertical-align:super;margin-left:1px;}
+.ndiv{width:1px;height:18px;background:var(--bdr2);flex-shrink:0;}
+.ntabs{display:flex;gap:0;flex:1;overflow-x:auto;}
+.ntab{padding:0 14px;height:54px;font-size:0.6rem;letter-spacing:2px;cursor:pointer;color:var(--smoke);border:none;background:transparent;border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.2s;display:flex;align-items:center;gap:5px;}
+.ntab:hover{color:var(--w);}
+.ntab.on{color:var(--g);border-bottom-color:var(--g);}
+.nr{display:flex;align-items:center;gap:10px;margin-left:auto;flex-shrink:0;}
+.livepill{display:flex;align-items:center;gap:5px;padding:3px 9px;border:1px solid rgba(182,255,74,0.2);font-size:0.56rem;letter-spacing:2px;color:var(--g);}
+.dot{width:5px;height:5px;background:var(--g);border-radius:50%;animation:blink 2s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+.nusr{font-size:0.62rem;color:var(--smoke);}
+.nusr b{color:var(--g);}
+.bout{padding:4px 11px;border:1px solid var(--bdr);background:transparent;color:var(--smoke);font-family:'JetBrains Mono',monospace;font-size:0.58rem;letter-spacing:1px;cursor:pointer;transition:all 0.2s;}
+.bout:hover{border-color:var(--g);color:var(--g);}
+
+/* ── SHELL ── */
+.shell{display:flex;min-height:calc(100vh - 54px);position:relative;z-index:1;}
+.side{width:205px;flex-shrink:0;background:var(--ink2);border-right:1px solid var(--bdr);padding:14px 7px;display:flex;flex-direction:column;}
+.ssec{font-size:0.54rem;letter-spacing:3px;color:var(--fog);padding:0 10px;margin:13px 0 4px;}
+.si{display:flex;align-items:center;gap:9px;padding:8px 10px;font-size:0.78rem;font-weight:500;color:var(--smoke);cursor:pointer;transition:all 0.2s;border-left:2px solid transparent;margin-bottom:1px;}
+.si:hover{color:var(--w);background:rgba(182,255,74,0.05);border-left-color:var(--bdr2);}
+.si.on{color:var(--g);background:rgba(182,255,74,0.08);border-left-color:var(--g);}
+.si-ic{font-size:0.84rem;width:14px;text-align:center;}
+.sibadge{margin-left:auto;background:var(--y);color:var(--ink);font-size:0.48rem;font-weight:700;padding:2px 5px;letter-spacing:1px;}
+.sfoot{margin-top:auto;padding:13px 10px;border-top:1px solid var(--bdr);}
+.sfoot p{font-size:0.56rem;color:var(--fog);line-height:2;}
+.sfoot b{color:rgba(182,255,74,0.45);}
+
+/* ── CONTENT ── */
+.content{flex:1;padding:22px 26px;overflow-y:auto;min-width:0;}
+.ph{margin-bottom:22px;}
+.ph-eye{font-size:0.56rem;letter-spacing:4px;color:rgba(182,255,74,0.6);margin-bottom:5px;}
+.ph-title{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;letter-spacing:2px;line-height:1.1;margin-bottom:3px;}
+.ph-title em{color:var(--g);font-style:normal;}
+.ph-sub{font-size:0.63rem;color:var(--smoke);}
+
+/* ── CARD ── */
+.card{background:var(--p);border:1px solid var(--bdr);padding:17px;margin-bottom:13px;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;width:2px;height:100%;background:linear-gradient(180deg,var(--g),var(--y));}
+.clbl{font-size:0.53rem;letter-spacing:3px;color:rgba(182,255,74,0.65);margin-bottom:13px;display:flex;align-items:center;gap:8px;}
+.clbl::after{content:'';flex:1;height:1px;background:var(--bdr);}
+
+/* ── KPI ── */
+.kpi-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin-bottom:13px;}
+.kpi{background:var(--p2);border:1px solid var(--bdr);padding:15px 13px;position:relative;overflow:hidden;transition:all 0.25s;cursor:default;}
+.kpi:hover{border-color:var(--bdr2);transform:translateY(-2px);background:var(--p3);}
+.kpi::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--g),transparent);}
+.kpi-ic{font-size:0.95rem;margin-bottom:7px;display:block;}
+.kpi-v{font-family:'Bebas Neue',sans-serif;font-size:1.65rem;color:var(--g);line-height:1;margin-bottom:2px;letter-spacing:1px;}
+.kpi-l{font-size:0.52rem;letter-spacing:2px;color:var(--smoke);}
+.kpi-s{font-size:0.6rem;color:var(--y);margin-top:3px;}
+
+/* ── FORM ── */
+.form-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:11px;}
+.fglbl{font-size:0.53rem;letter-spacing:2px;color:rgba(182,255,74,0.65);text-transform:uppercase;display:block;margin-bottom:6px;}
+.fginp{width:100%;padding:9px 11px;background:var(--ink2);border:1px solid var(--bdr);color:var(--w);font-family:'JetBrains Mono',monospace;font-size:0.84rem;outline:none;transition:all 0.2s;}
+.fginp:focus{border-color:var(--g);background:var(--ink3);}
+
+/* ── BUTTONS ── */
+.btnp{padding:11px 22px;background:var(--g);border:none;color:var(--ink);font-family:'Bebas Neue',sans-serif;font-size:0.92rem;letter-spacing:2px;cursor:pointer;transition:all 0.25s;}
+.btnp:hover{background:var(--g2);box-shadow:0 6px 28px rgba(182,255,74,0.35);transform:translateY(-1px);}
+.btnp:disabled{opacity:0.3;cursor:not-allowed;transform:none;box-shadow:none;}
+.btns{padding:11px 22px;background:transparent;border:1px solid var(--y);color:var(--y);font-family:'Bebas Neue',sans-serif;font-size:0.92rem;letter-spacing:2px;cursor:pointer;transition:all 0.25s;}
+.btns:hover{background:var(--y);color:var(--ink);box-shadow:0 6px 28px rgba(255,214,0,0.25);}
+.btnpdf{padding:11px 22px;background:transparent;border:1px solid var(--r);color:var(--r2);font-family:'Bebas Neue',sans-serif;font-size:0.92rem;letter-spacing:2px;cursor:pointer;transition:all 0.25s;display:flex;align-items:center;gap:8px;}
+.btnpdf:hover{background:var(--r);color:white;box-shadow:0 6px 28px rgba(255,68,68,0.25);}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:0;margin-bottom:18px;border-bottom:1px solid var(--bdr);}
+.tabb{padding:8px 18px;font-size:0.6rem;letter-spacing:2px;cursor:pointer;color:var(--smoke);border:none;background:transparent;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;}
+.tabb.on{color:var(--g);border-bottom-color:var(--g);}
+.tabb:hover:not(.on){color:var(--w);}
+
+/* ── RECS ── */
+.rec{background:var(--ink2);border:1px solid var(--bdr);border-left:2px solid var(--g);padding:11px 13px;margin-bottom:7px;transition:all 0.2s;}
+.rec:hover{background:var(--p2);}
+.rec-top{display:flex;align-items:center;gap:7px;margin-bottom:4px;flex-wrap:wrap;}
+.rec-ttl{font-size:0.82rem;font-weight:600;}
+.rec-desc{font-size:0.7rem;color:var(--smoke);line-height:1.6;}
+.rec-save{font-family:'Bebas Neue',sans-serif;font-size:0.82rem;color:var(--y);margin-top:4px;letter-spacing:1px;}
+.badge{padding:2px 6px;font-size:0.53rem;font-weight:600;letter-spacing:1px;}
+.bH{background:rgba(255,68,68,0.12);color:#FF8888;border:1px solid rgba(255,68,68,0.25);}
+.bM{background:rgba(255,214,0,0.12);color:var(--y);border:1px solid rgba(255,214,0,0.25);}
+.bO{background:rgba(182,255,74,0.12);color:var(--g);border:1px solid var(--bdr2);}
+
+/* ── MACHINE ── */
+.mach-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:9px;}
+.mach{background:var(--ink2);border:1px solid var(--bdr);padding:13px;text-align:center;transition:all 0.2s;}
+.mach:hover{border-color:var(--bdr2);transform:translateY(-2px);}
+.mach-nm{font-size:0.56rem;letter-spacing:1px;color:var(--smoke);margin-bottom:7px;}
+.mach-pct{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;margin-bottom:5px;letter-spacing:1px;}
+.mach-bar{height:3px;background:var(--ink3);margin-bottom:5px;overflow:hidden;}
+.mach-fill{height:100%;transition:width 1s cubic-bezier(.16,1,.3,1);}
+.mG .mach-fill{background:linear-gradient(90deg,var(--g3),var(--g));}
+.mY .mach-fill{background:linear-gradient(90deg,#AA7700,var(--y));}
+.mR .mach-fill{background:linear-gradient(90deg,#AA0000,var(--r));}
+.mach-st{font-size:0.58rem;font-weight:600;letter-spacing:2px;}
+.stG{color:var(--g);}.stY{color:var(--y);}.stR{color:var(--r);}
+.mach-kw{font-size:0.56rem;color:var(--fog);margin-top:2px;}
+
+/* ── SCORE RING ── */
+.sring{width:125px;height:125px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;margin:0 auto 11px;}
+.sring::before{content:'';position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--g) 0deg,var(--g) var(--deg,180deg),var(--bdr) var(--deg,180deg));}
+.sring::after{content:'';position:absolute;inset:9px;border-radius:50%;background:var(--p);}
+.sn{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;position:relative;z-index:1;letter-spacing:1px;}
+.sof{font-size:0.53rem;color:var(--smoke);position:relative;z-index:1;}
+.slbl{font-size:0.58rem;letter-spacing:3px;font-weight:600;text-align:center;}
+
+/* ── CREDIT ── */
+.cred-row{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:13px;}
+.cred-box{background:var(--p2);border:1px solid var(--bdr);padding:16px 13px;text-align:center;position:relative;}
+.cred-box::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:1px;background:var(--g);opacity:0.3;}
+.cred-v{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--g);margin-bottom:2px;letter-spacing:1px;}
+.cred-l{font-size:0.52rem;letter-spacing:2px;color:var(--smoke);}
+.cred-box.amb .cred-v{color:var(--y);}
+.cred-box.amb{border-color:rgba(255,214,0,0.14);}
+.cred-box.amb::after{background:var(--y);}
+.annual{background:linear-gradient(135deg,var(--ink2),var(--p2));border:1px solid rgba(255,214,0,0.15);padding:18px 22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:relative;overflow:hidden;}
+.annual::before{content:'';position:absolute;top:-30px;right:-30px;width:90px;height:90px;border-radius:50%;background:radial-gradient(circle,rgba(255,214,0,0.1),transparent 70%);}
+.ann-ic{font-size:1.7rem;flex-shrink:0;}
+.ann-txt{flex:1;}
+.ann-ttl{font-family:'Bebas Neue',sans-serif;font-size:0.95rem;color:var(--y);margin-bottom:2px;letter-spacing:2px;}
+.ann-sub{font-size:0.6rem;color:var(--smoke);}
+.ann-val{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;color:var(--y);white-space:nowrap;letter-spacing:2px;}
+
+/* ── CHART ── */
+.cwrap{height:180px;position:relative;}
+
+/* ── DROP ── */
+.drop{border:1px dashed var(--bdr2);padding:46px;text-align:center;cursor:pointer;transition:all 0.25s;background:var(--ink2);}
+.drop:hover{border-color:var(--g);background:rgba(182,255,74,0.02);}
+.drop-ic{font-size:1.8rem;margin-bottom:9px;opacity:0.45;}
+.drop-ttl{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;margin-bottom:5px;color:var(--g);}
+.drop-sub{font-size:0.62rem;color:var(--smoke);line-height:1.8;}
+
+/* ── LOADER ── */
+.lwrap2{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px;}
+.spin{width:34px;height:34px;border:2px solid var(--bdr);border-top-color:var(--g);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:12px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.ltxt{font-size:0.62rem;letter-spacing:3px;color:var(--g);animation:blink 1.2s ease-in-out infinite;}
+
+/* ── LAYOUTS ── */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.three{display:grid;grid-template-columns:1fr 2fr;gap:13px;}
+
+/* ── FACTORIES ── */
+.fac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:13px;}
+.fac-card{background:var(--p);border:1px solid var(--bdr);padding:18px;position:relative;overflow:hidden;transition:all 0.25s;cursor:pointer;}
+.fac-card:hover{border-color:var(--bdr2);transform:translateY(-3px);box-shadow:0 10px 36px rgba(0,0,0,0.4);}
+.fac-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--g),var(--y));}
+.fac-nm{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;letter-spacing:2px;margin-bottom:3px;}
+.fac-loc{font-size:0.58rem;color:var(--smoke);margin-bottom:14px;letter-spacing:1px;}
+.fkpi-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:12px;}
+.fkpi{text-align:center;padding:7px;background:var(--p2);}
+.fkpi-v{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--g);letter-spacing:1px;}
+.fkpi-l{font-size:0.48rem;letter-spacing:2px;color:var(--smoke);}
+.fac-bar{height:3px;background:var(--ink3);overflow:hidden;margin-bottom:6px;}
+.fac-fill{height:100%;background:linear-gradient(90deg,var(--g3),var(--g));transition:width 1s ease;}
+.fac-row{display:flex;justify-content:space-between;font-size:0.56rem;color:var(--smoke);}
+.fst{position:absolute;top:18px;right:18px;padding:2px 7px;font-size:0.52rem;letter-spacing:2px;}
+.fs-g{background:rgba(182,255,74,0.1);color:var(--g);border:1px solid var(--bdr2);}
+.fs-w{background:rgba(255,214,0,0.1);color:var(--y);border:1px solid rgba(255,214,0,0.22);}
+.fs-c{background:rgba(255,68,68,0.1);color:var(--r);border:1px solid rgba(255,68,68,0.22);}
+
+/* ── CARBON CREDITS ── */
+.cc-hero{background:linear-gradient(135deg,var(--p2),var(--p3));border:1px solid var(--bdr2);padding:28px;margin-bottom:13px;position:relative;overflow:hidden;}
+.cc-hero::after{content:'';position:absolute;top:-50px;right:-50px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(182,255,74,0.07),transparent 70%);}
+.cc-hero-ttl{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:3px;color:var(--g);margin-bottom:5px;}
+.cc-hero-sub{font-size:0.62rem;color:var(--smoke);line-height:1.9;}
+.cc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:13px;}
+.cc-stat{background:var(--p2);border:1px solid var(--bdr);padding:18px;text-align:center;}
+.cc-stat-v{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--g);letter-spacing:2px;}
+.cc-stat-l{font-size:0.52rem;letter-spacing:2px;color:var(--smoke);margin-top:3px;}
+.cc-table{width:100%;border-collapse:collapse;}
+.cc-table th{font-size:0.52rem;letter-spacing:2px;color:var(--g);padding:9px 13px;text-align:left;border-bottom:1px solid var(--bdr);}
+.cc-table td{font-size:0.72rem;padding:9px 13px;border-bottom:1px solid rgba(182,255,74,0.03);color:var(--smoke);}
+.cc-table tr:hover td{background:rgba(182,255,74,0.02);color:var(--w);}
+.cc-pill{padding:2px 7px;font-size:0.52rem;letter-spacing:1px;}
+.cc-a{background:rgba(182,255,74,0.1);color:var(--g);border:1px solid var(--bdr2);}
+.cc-p{background:rgba(255,214,0,0.1);color:var(--y);border:1px solid rgba(255,214,0,0.2);}
+
+/* ── MACHINES FULL ── */
+.mach-full{background:var(--p);border:1px solid var(--bdr);padding:18px;transition:all 0.25s;}
+.mach-full:hover{border-color:var(--bdr2);}
+.mfhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.mfnm{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;}
+.mparams{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px;}
+.mp{background:var(--p2);padding:9px;text-align:center;}
+.mp-v{font-family:'Bebas Neue',sans-serif;font-size:1.15rem;letter-spacing:1px;}
+.mp-l{font-size:0.48rem;letter-spacing:2px;color:var(--smoke);}
+.mfbar{height:5px;background:var(--ink3);overflow:hidden;margin-bottom:5px;}
+.mffill{height:100%;transition:width 1s ease;}
+.mGf .mffill{background:linear-gradient(90deg,var(--g3),var(--g));}
+.mYf .mffill{background:linear-gradient(90deg,#AA7700,var(--y));}
+.mRf .mffill{background:linear-gradient(90deg,#AA0000,var(--r));}
+.malert{padding:7px 9px;background:rgba(255,68,68,0.07);border:1px solid rgba(255,68,68,0.18);font-size:0.6rem;color:var(--r2);margin-top:7px;}
+
+/* ── REPORTS ── */
+.rep-item{background:var(--p);border:1px solid var(--bdr);padding:15px 18px;display:flex;align-items:center;gap:14px;transition:all 0.2s;cursor:pointer;margin-bottom:9px;}
+.rep-item:hover{border-color:var(--bdr2);background:var(--p2);}
+.rep-ic{font-size:1.3rem;flex-shrink:0;opacity:0.65;}
+.rep-info{flex:1;}
+.rep-ttl{font-size:0.82rem;font-weight:600;margin-bottom:2px;}
+.rep-meta{font-size:0.6rem;color:var(--smoke);}
+.rep-dl{padding:6px 14px;border:1px solid var(--g);background:transparent;color:var(--g);font-family:'JetBrains Mono',monospace;font-size:0.58rem;letter-spacing:1px;cursor:pointer;transition:all 0.2s;}
+.rep-dl:hover{background:var(--g);color:var(--ink);}
+
+/* ── SETTINGS ── */
+.set-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.set-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--bdr);}
+.set-row:last-child{border-bottom:none;}
+.set-lbl{font-size:0.76rem;font-weight:500;}
+.set-sub{font-size:0.6rem;color:var(--smoke);margin-top:1px;}
+.toggle{width:38px;height:19px;background:var(--fog);border:none;border-radius:10px;cursor:pointer;position:relative;transition:all 0.25s;}
+.toggle.on{background:var(--g);}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:13px;height:13px;border-radius:50%;background:white;transition:all 0.25s;}
+.toggle.on::after{left:22px;}
+.sinp{padding:7px 11px;background:var(--ink2);border:1px solid var(--bdr);color:var(--w);font-family:'JetBrains Mono',monospace;font-size:0.78rem;outline:none;width:155px;}
+.sinp:focus{border-color:var(--g);}
+
+/* ── PDF PROGRESS OVERLAY ── */
+.pdf-overlay{position:fixed;inset:0;background:rgba(4,7,4,0.92);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.pdf-box{background:var(--p);border:1px solid var(--bdr2);padding:40px 50px;text-align:center;min-width:360px;}
+.pdf-title{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:3px;color:var(--g);margin-bottom:6px;}
+.pdf-sub{font-size:0.62rem;color:var(--smoke);margin-bottom:24px;letter-spacing:1px;}
+.pdf-bar-wrap{height:4px;background:var(--ink3);margin-bottom:12px;overflow:hidden;}
+.pdf-bar-fill{height:100%;background:linear-gradient(90deg,var(--g3),var(--g),var(--y));transition:width 0.4s ease;background-size:200%;animation:sh 2s linear infinite;}
+.pdf-step{font-size:0.62rem;color:var(--g);letter-spacing:2px;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .side{display:none;}
+  .content{padding:14px;}
+  .two,.three{grid-template-columns:1fr;}
+  .cred-row{grid-template-columns:1fr 1fr;}
+  .cc-stats{grid-template-columns:1fr 1fr;}
+  .set-grid{grid-template-columns:1fr;}
+}
+@media(max-width:480px){
+  .kpi-g{grid-template-columns:1fr 1fr;}
+  .cred-row{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="gbg"></div>
+<div class="orb o1"></div>
+<div class="orb o2"></div>
+<div id="cur"></div>
+<div id="cur2"></div>
+<div id="root"></div>
+
+<script>
+const c=document.getElementById('cur'),c2=document.getElementById('cur2');
+document.addEventListener('mousemove',e=>{
+  c.style.left=e.clientX+'px';c.style.top=e.clientY+'px';
+  setTimeout(()=>{c2.style.left=e.clientX+'px';c2.style.top=e.clientY+'px';},70);
+});
+document.addEventListener('mousedown',()=>c.style.transform='translate(-50%,-50%) scale(2.2)');
+document.addEventListener('mouseup',()=>c.style.transform='translate(-50%,-50%) scale(1)');
+</script>
+
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback}=React;
+const API='https://ecocore-api.onrender.com';
+
+// ─── USERS (offline login — no backend needed) ───────────
+const USERS={admin:'admin123',factory1:'pass123',factory2:'pass456'};
+
+// ─── LOCAL ANALYZE ───────────────────────────────────────
+function localAnalyze(form){
+  const{units,energy,renewable,downtime,efficiency,energy_cost,factory_name}=form;
+  const carbon=Math.max(5,energy*0.085-renewable*0.25+units*0.005+downtime*0.12-efficiency*0.03+(Math.random()*2-1));
+  const optimal=carbon*0.70,saved=carbon-optimal;
+  const kwh_saved=energy*0.25,money=kwh_saved*energy_cost*30;
+  const credits=saved*750,annual=credits*12+money*12;
+  const score=Math.max(0,Math.min(100,100-(carbon/150*100)));
+  const recs=[];
+  if(renewable<30)recs.push({priority:'HIGH',title:'Increase Renewable Energy',desc:`Boost from ${renewable}% to 40% — Save ${((40-renewable)*2.5).toFixed(1)} tons CO2/month`,saving:`₹${((40-renewable)*2.5*750).toFixed(0)}`});
+  if(efficiency<80)recs.push({priority:'HIGH',title:'Improve Machine Efficiency',desc:`At ${efficiency}% — target 85% via predictive maintenance. 15% energy cut.`,saving:`₹${(energy*0.15*energy_cost*30).toFixed(0)}/month`});
+  if(downtime>4)recs.push({priority:'MEDIUM',title:'Reduce Machine Downtime',desc:`${downtime}hrs downtime — optimise to <2hrs for 18% more throughput`,saving:`₹${(downtime*500*30).toFixed(0)}/month`});
+  if(energy>2000)recs.push({priority:'MEDIUM',title:'Peak Hour Load Shifting',desc:'Move heavy ops to off-peak window (10PM–6AM) to cut tariffs',saving:'~20% bill reduction'});
+  recs.push({priority:'OPPORTUNITY',title:'Carbon Credit Market',desc:`Register on BEE Carbon Exchange — certified credits ready`,saving:`₹${credits.toFixed(0)}/month`});
+  const dates=Array.from({length:30},(_,i)=>{const d=new Date();d.setDate(d.getDate()-29+i);return d.toISOString().slice(0,10);});
+  const hist_c=dates.map((_,i)=>Math.max(0,carbon+Math.sin(i)*1.5+(Math.random()*2-1)-carbon*0.004*i));
+  const hist_e=dates.map(()=>energy+(Math.random()*80-40));
+  const machines=['Compressor A','Boiler B','Motor C','Conveyor D','Pump E'];
+  const machine_health=machines.map((name,i)=>{
+    const h=Math.max(0,Math.min(100,efficiency-(i*4)+(Math.random()*7-3.5)));
+    return{name,health:+h.toFixed(1),status:h>75?'Good':h>50?'Warning':'Critical',current_draw:+(energy/5*(1+(100-h)/200)).toFixed(1)};
+  });
+  return{factory_name,carbon_emissions:+carbon.toFixed(2),optimal_carbon:+optimal.toFixed(2),carbon_saved:+saved.toFixed(2),energy_saved_kwh:+kwh_saved.toFixed(1),monthly_savings:+money.toFixed(0),carbon_credit_value:+credits.toFixed(0),annual_benefit:+annual.toFixed(0),carbon_score:+score.toFixed(1),recommendations:recs,machine_health,trend:{dates,carbon:hist_c.map(v=>+v.toFixed(2)),energy:hist_e.map(v=>+v.toFixed(1))}};
+}
+
+// ─── CHARTS ──────────────────────────────────────────────
+function LineChart({labels,data,label,color,fill=true}){
+  const ref=useRef();const inst=useRef();
+  useEffect(()=>{
+    if(!ref.current)return;
+    if(inst.current)inst.current.destroy();
+    const ctx=ref.current.getContext('2d');
+    const grad=ctx.createLinearGradient(0,0,0,180);
+    grad.addColorStop(0,color+'50');grad.addColorStop(1,color+'00');
+    inst.current=new Chart(ctx,{type:'line',data:{labels,datasets:[{label,data,borderColor:color,backgroundColor:fill?grad:'transparent',borderWidth:1.8,pointRadius:0,pointHoverRadius:4,tension:0.4,fill}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#0F180F',borderColor:color,borderWidth:1,titleFont:{family:'JetBrains Mono',size:10},bodyFont:{family:'JetBrains Mono',size:11},titleColor:'#B6FF4A',bodyColor:'#EDF5ED',padding:10}},scales:{x:{grid:{color:'rgba(182,255,74,0.03)'},ticks:{color:'#3A4A3A',font:{family:'JetBrains Mono',size:8},maxTicksLimit:6}},y:{grid:{color:'rgba(182,255,74,0.06)'},ticks:{color:'#3A4A3A',font:{family:'JetBrains Mono',size:8}}}}}});
+    return()=>{if(inst.current)inst.current.destroy();};
+  },[labels,data,color]);
+  return <div className="cwrap"><canvas ref={ref}/></div>;
+}
+
+function BarChart({labels,data,label,color}){
+  const ref=useRef();const inst=useRef();
+  useEffect(()=>{
+    if(!ref.current)return;
+    if(inst.current)inst.current.destroy();
+    inst.current=new Chart(ref.current.getContext('2d'),{type:'bar',data:{labels,datasets:[{label,data,backgroundColor:color+'80',borderColor:color,borderWidth:1,borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#0F180F',borderColor:color,borderWidth:1,titleFont:{family:'JetBrains Mono',size:10},bodyFont:{family:'JetBrains Mono',size:11},titleColor:'#B6FF4A',bodyColor:'#EDF5ED',padding:10}},scales:{x:{grid:{display:false},ticks:{color:'#3A4A3A',font:{family:'JetBrains Mono',size:8},maxTicksLimit:8}},y:{grid:{color:'rgba(182,255,74,0.06)'},ticks:{color:'#3A4A3A',font:{family:'JetBrains Mono',size:8}}}}}});
+    return()=>{if(inst.current)inst.current.destroy();};
+  },[labels,data,color]);
+  return <div className="cwrap"><canvas ref={ref}/></div>;
+}
+
+// ─── PREMIUM PDF GENERATOR (pure client-side, no backend) ─
+async function generatePremiumPDF(result, form, onStep){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210, H=297;
+
+  // ── color helpers ──
+  const hex=(h)=>{const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return[r,g,b];};
+  const fill=(h)=>doc.setFillColor(...hex(h));
+  const stroke=(h)=>doc.setDrawColor(...hex(h));
+  const text=(h)=>doc.setTextColor(...hex(h));
+
+  const G='#B6FF4A',Y='#FFD600',R='#FF4444',INK='#040704',DARK='#070C07',MID='#101810',GREY='#3A4A3A',WHITE='#EDF5ED',LGREY='#5A6A5A';
+
+  // ─── draw dark background + grid ───
+  function pageBase(){
+    fill(DARK); doc.rect(0,0,W,H,'F');
+    // subtle grid
+    doc.setLineWidth(0.1); stroke('#1A271A');
+    for(let x=0;x<W;x+=12){doc.line(x,0,x,H);}
+    for(let y=0;y<H;y+=12){doc.line(0,y,W,y);}
+    // left green accent bar
+    fill(G); doc.rect(0,0,3,H,'F');
+    // header band
+    fill('#060A06'); doc.rect(0,0,W,20,'F');
+    fill(G); doc.rect(0,20,W,0.8,'F');
+  }
+
+  // ─── header ───
+  function header(title, sub, page, total){
+    pageBase();
+    doc.setFont('helvetica','bold'); doc.setFontSize(13);
+    text(G); doc.text('ECOCORE',6,13);
+    doc.setFont('helvetica','normal'); doc.setFontSize(13);
+    text(WHITE); doc.text(' AI',38,13);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7);
+    text(LGREY); doc.text(title,6,18.5);
+    // right side
+    doc.setFont('helvetica','normal'); doc.setFontSize(6.5);
+    text(LGREY);
+    const today=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+    doc.text(`${today}  |  Page ${page}/${total}`,W-8,13,{align:'right'});
+    doc.text(form.factory_name||'Factory Report',W-8,18.5,{align:'right'});
+    // footer
+    fill('#060A06'); doc.rect(0,H-10,W,10,'F');
+    fill(G); doc.rect(0,H-10,W,0.6,'F');
+    doc.setFont('helvetica','normal'); doc.setFontSize(6);
+    text(GREY); doc.text('EcoCore AI v6 — Team EcoOptimizer, MMIT Pune  |  CONFIDENTIAL',6,H-3.5);
+    doc.text(`© ${new Date().getFullYear()} EcoCore AI. All rights reserved.`,W-8,H-3.5,{align:'right'});
+  }
+
+  // ─── section heading ───
+  function sectionHead(label, y){
+    doc.setFont('helvetica','bold'); doc.setFontSize(7);
+    text(G); doc.text(`// ${label.toUpperCase()}`,6,y);
+    stroke(G); doc.setLineWidth(0.3);
+    doc.line(6,y+1.5,W-6,y+1.5);
+    return y+6;
+  }
+
+  // ─── kpi card ───
+  function kpiCard(x,y,w,h2,val,lbl,sub,col){
+    fill(MID); stroke(GREY); doc.setLineWidth(0.3);
+    doc.rect(x,y,w,h2,'FD');
+    fill(col); doc.rect(x,y+h2-0.8,w,0.8,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(16);
+    text(col); doc.text(val,x+w/2,y+h2/2-1,{align:'center'});
+    doc.setFont('helvetica','normal'); doc.setFontSize(5.5);
+    text(LGREY); doc.text(lbl.toUpperCase(),x+w/2,y+h2/2+5,{align:'center'});
+    if(sub){doc.setFontSize(5); text(Y); doc.text(sub,x+w/2,y+h2/2+9,{align:'center'});}
+  }
+
+  // ─── render chart to canvas → image ───
+  async function chartToBase64(type,labels,datasets,opts={}){
+    return new Promise(res=>{
+      const cv=document.createElement('canvas');
+      cv.width=700; cv.height=220;
+      const ctx=cv.getContext('2d');
+      ctx.fillStyle='#101810'; ctx.fillRect(0,0,700,220);
+      const cfg={type,data:{labels,datasets},options:{
+        responsive:false,animation:false,
+        plugins:{legend:{display:false}},
+        scales:type==='pie'||type==='doughnut'?undefined:{
+          x:{grid:{color:'rgba(182,255,74,0.07)'},ticks:{color:'#5A6A5A',font:{size:10,family:'monospace'}}},
+          y:{grid:{color:'rgba(182,255,74,0.1)'},ticks:{color:'#5A6A5A',font:{size:10,family:'monospace'}}},
+        },
+        ...opts
+      }};
+      const ch=new Chart(ctx,cfg);
+      setTimeout(()=>{res(cv.toDataURL('image/png'));ch.destroy();},350);
+    });
+  }
+
+  // ══════════ PAGE 1 — COVER + KPIs ══════════
+  onStep('Building cover page...',10);
+  header('ENERGY & CARBON INTELLIGENCE REPORT','',1,4);
+
+  // Big factory name
+  fill('#0A180A'); doc.rect(6,24,W-12,22,'F');
+  stroke(G); doc.setLineWidth(0.5); doc.rect(6,24,W-12,22,'S');
+  doc.setFont('helvetica','bold'); doc.setFontSize(18);
+  text(G); doc.text(form.factory_name||'Factory Report',W/2,33,{align:'center'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+  text(LGREY); doc.text('AI-Powered Industrial Energy & Carbon Optimization Analysis',W/2,39.5,{align:'center'});
+
+  // Executive summary
+  let y=52;
+  y=sectionHead('Executive Summary',y);
+  const execLines=doc.splitTextToSize(
+    `This report presents a comprehensive AI-driven analysis for ${form.factory_name}. Current carbon emissions stand at ${result.carbon_emissions} tons CO2/month against an AI-computed optimal target of ${result.optimal_carbon} tons. Implementing all recommended optimisations could yield annual benefits of Rs.${result.annual_benefit.toLocaleString()} through combined energy savings and carbon credit earnings. Carbon Score: ${result.carbon_score}/100.`,
+    W-20
+  );
+  doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  text(LGREY);
+  doc.text(execLines,8,y); y+=execLines.length*4.5+4;
+
+  // KPI grid — row 1
+  y=sectionHead('Key Performance Metrics',y);
+  const kw=(W-14)/6, kh=22;
+  [
+    [`${result.carbon_emissions}t`,'CO2 Emissions',`Target: ${result.optimal_carbon}t`,R],
+    [`${result.carbon_score.toFixed(0)}`,'Carbon Score /100',result.carbon_score>=70?'EXCELLENT':'MODERATE',G],
+    [`₹${(result.monthly_savings/1000).toFixed(0)}K`,'Monthly Savings','Energy + Credits',Y],
+    [`₹${(result.annual_benefit/100000).toFixed(1)}L`,'Annual Benefit','Full Optimization',Y],
+    [`${result.energy_saved_kwh}`,'kWh Saved/month','25% reduction',G],
+    [`${result.carbon_saved.toFixed(1)}t`,'CO2 Reduced','vs baseline',G],
+  ].forEach((item,i)=>{kpiCard(6+i*kw,y,kw-1,kh,...item);});
+  y+=kh+3;
+
+  // KPI row 2
+  [
+    [`${result.energy_saved_kwh}`,'kWh Saved',null,'#00CCFF'],
+    [`${form.renewable}%`,'Renewable Energy','Target: 40%',G],
+    [`${form.efficiency}%`,'Efficiency Index','Target: 85%',G],
+    [`${form.downtime}hrs`,'Machine Downtime','Target: <2hrs',Y],
+    [`₹${(result.carbon_credit_value/1000).toFixed(0)}K`,'Carbon Credits','BEE Exchange',G],
+    [`₹${(result.annual_benefit/100000).toFixed(1)}L`,'Total Annual Benefit','Projected',Y],
+  ].forEach((item,i)=>{kpiCard(6+i*kw,y,kw-1,kh,...item);});
+  y+=kh+4;
+
+  // Carbon score gauge (drawn with arcs)
+  const gx=W/2, gy=y+28, gr=20;
+  fill(MID); doc.circle(gx,gy,gr+3,'F');
+  // arc background
+  doc.setLineWidth(4); stroke('#1A271A');
+  doc.setLineDashPattern([],[0]);
+  // Score arc using many tiny lines
+  const scoreAngle=(result.carbon_score/100)*Math.PI;
+  const scoreCol=result.carbon_score>=70?G:result.carbon_score>=40?Y:R;
+  stroke(GREY); doc.setLineWidth(3);
+  for(let a=Math.PI;a<2*Math.PI;a+=0.05){const x1=gx+gr*Math.cos(a),y1=gy+gr*Math.sin(a),x2=gx+gr*Math.cos(a+0.05),y2=gy+gr*Math.sin(a+0.05);doc.line(x1,y1,x2,y2);}
+  stroke(scoreCol); doc.setLineWidth(3);
+  for(let a=Math.PI;a<Math.PI+scoreAngle;a+=0.04){const x1=gx+gr*Math.cos(a),y1=gy+gr*Math.sin(a),x2=gx+gr*Math.cos(a+0.04),y2=gy+gr*Math.sin(a+0.04);doc.line(x1,y1,x2,y2);}
+  doc.setFont('helvetica','bold'); doc.setFontSize(14); text(scoreCol);
+  doc.text(`${result.carbon_score.toFixed(0)}`,gx,gy+2,{align:'center'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(6); text(LGREY);
+  doc.text('CARBON SCORE / 100',gx,gy+8,{align:'center'});
+  doc.setFontSize(7); text(scoreCol);
+  doc.text(result.carbon_score>=70?'EXCELLENT':result.carbon_score>=40?'MODERATE':'CRITICAL',gx,gy+14,{align:'center'});
+
+  // Annual savings highlight box
+  fill('#0A1400'); stroke(Y); doc.setLineWidth(0.6);
+  doc.rect(6,y+60,W-12,18,'FD');
+  doc.setFont('helvetica','bold'); doc.setFontSize(10); text(Y);
+  doc.text('TOTAL ANNUAL BENEFIT POTENTIAL',W/2,y+69,{align:'center'});
+  doc.setFontSize(18); text(Y);
+  doc.text(`Rs.${result.annual_benefit.toLocaleString()}`,W/2,y+75,{align:'center'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); text(LGREY);
+  doc.text('Energy Savings + Carbon Credit Revenue  |  Combined Projection',W/2,y+80,{align:'center'});
+
+  // ══════════ PAGE 2 — CHARTS ══════════
+  onStep('Rendering trend charts...',30);
+  doc.addPage();
+  header('TREND ANALYSIS — 30 DAY PERFORMANCE','',2,4);
+
+  y=25;
+  y=sectionHead('Carbon Emissions Trend — 30 Days',y);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); text(LGREY);
+  doc.text(`Current: ${result.carbon_emissions}t CO2/month  |  AI Target: ${result.optimal_carbon}t  |  Gap: ${result.carbon_saved.toFixed(1)}t  |  Trending: Downward`,8,y); y+=5;
+
+  const carbonImg=await chartToBase64('line',result.trend.dates,[
+    {label:'CO2',data:result.trend.carbon,borderColor:'#B6FF4A',backgroundColor:'rgba(182,255,74,0.15)',borderWidth:2,pointRadius:2,tension:0.4,fill:true},
+    {label:'Target',data:Array(result.trend.dates.length).fill(result.optimal_carbon),borderColor:'#FFD600',borderWidth:1.5,borderDash:[6,4],pointRadius:0,fill:false},
+  ]);
+  doc.addImage(carbonImg,'PNG',6,y,W-12,48); y+=52;
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); text(LGREY);
+  const c1=doc.splitTextToSize(`Carbon emissions have shown a consistent downward trend over 30 days. The dashed yellow line marks the AI-computed optimal target of ${result.optimal_carbon} tons/month. Closing this gap will unlock Rs.${result.carbon_credit_value.toLocaleString()} in monthly carbon credit earnings.`,W-14);
+  doc.text(c1,8,y); y+=c1.length*4+5;
+
+  y=sectionHead('Energy Consumption Trend — 30 Days',y);
+  doc.text(`Total: ${form.energy} kWh/month  |  Saveable: ${result.energy_saved_kwh} kWh  |  Monthly saving: Rs.${result.monthly_savings.toLocaleString()}`,8,y+1); y+=6;
+  const energyImg=await chartToBase64('bar',result.trend.dates,[
+    {label:'Energy kWh',data:result.trend.energy,backgroundColor:'rgba(255,214,0,0.55)',borderColor:'#FFD600',borderWidth:1,borderRadius:2},
+  ]);
+  doc.addImage(energyImg,'PNG',6,y,W-12,48); y+=52;
+  const c2=doc.splitTextToSize(`Energy consumption of ${form.energy} kWh/month contains an estimated ${result.energy_saved_kwh} kWh of reducible waste. Through load optimisation, peak-hour shifting, and efficiency improvements, monthly energy costs can be reduced by Rs.${result.monthly_savings.toLocaleString()}.`,W-14);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); text(LGREY);
+  doc.text(c2,8,y); y+=c2.length*4+5;
+
+  // Monthly comparison bar chart
+  y=sectionHead('Month-over-Month Progress (Jan–Apr 2026)',y);
+  const months=['Jan','Feb','Mar','Apr'];
+  const mCarbon=[88.2,81.4,74.1,result.carbon_emissions];
+  const mEnergy=[3400,3250,3050,form.energy];
+  const mSavings=[41000,56000,71000,result.monthly_savings];
+  const moCompImg=await chartToBase64('bar',months,[
+    {label:'Carbon (tons)',data:mCarbon,backgroundColor:'rgba(182,255,74,0.7)',borderColor:'#B6FF4A',borderWidth:1,borderRadius:3},
+    {label:'Energy (100s kWh)',data:mEnergy.map(v=>v/100),backgroundColor:'rgba(255,214,0,0.55)',borderColor:'#FFD600',borderWidth:1,borderRadius:3},
+    {label:'Savings (Rs.1000s)',data:mSavings.map(v=>v/1000),backgroundColor:'rgba(0,204,255,0.5)',borderColor:'#00CCFF',borderWidth:1,borderRadius:3},
+  ],{plugins:{legend:{display:true,labels:{color:'#5A6A5A',font:{size:10}}}}});
+  doc.addImage(moCompImg,'PNG',6,y,W-12,44); y+=46;
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); text(LGREY);
+  const c3=`Carbon emissions reduced by ${(((88.2-result.carbon_emissions)/88.2)*100).toFixed(1)}% since January 2026. Monthly savings grew from Rs.41,000 to Rs.${result.monthly_savings.toLocaleString()} — a ${(((result.monthly_savings-41000)/41000)*100).toFixed(0)}% improvement, demonstrating consistent optimisation gains.`;
+  doc.text(doc.splitTextToSize(c3,W-14),8,y);
+
+  // ══════════ PAGE 3 — AI RECOMMENDATIONS ══════════
+  onStep('Writing AI recommendations...',55);
+  doc.addPage();
+  header('AI RECOMMENDATIONS & CARBON CREDITS','',3,4);
+  y=26;
+  y=sectionHead('AI-Generated Priority Recommendations',y);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); text(LGREY);
+  doc.text('Sorted by ROI impact. Implement HIGH priority items first for maximum benefit.',8,y); y+=5;
+
+  // Recommendations table
+  const colW=[10,22,48,70,38];
+  const colX=[6,16,38,86,156];
+  // Header
+  fill(G); doc.rect(6,y,W-12,8,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(6.5); text(INK);
+  ['#','PRIORITY','RECOMMENDATION','DESCRIPTION','SAVING'].forEach((h,i)=>{doc.text(h,colX[i]+1,y+5);});
+  y+=8;
+
+  result.recommendations.forEach((r,idx)=>{
+    const rh=r.desc.length>80?16:12;
+    const bg=idx%2===0?'#0A180A':MID;
+    fill(bg); doc.rect(6,y,W-12,rh,'F');
+    stroke(GREY); doc.setLineWidth(0.2);
+    doc.line(6,y+rh,W-6,y+rh);
+
+    const pc=r.priority==='HIGH'?R:r.priority==='MEDIUM'?Y:G;
+    doc.setFont('helvetica','bold'); doc.setFontSize(6.5); text(LGREY);
+    doc.text(String(idx+1),colX[0]+3,y+rh/2+1,{align:'center'});
+    text(pc); doc.text(r.priority,colX[1]+1,y+rh/2+1);
+    text(WHITE); doc.setFont('helvetica','bold'); doc.text(r.title,colX[2]+1,y+5);
+    doc.setFont('helvetica','normal'); text(LGREY); doc.setFontSize(6);
+    const dl=doc.splitTextToSize(r.desc,colW[3]-4);
+    doc.text(dl,colX[3]+1,y+5);
+    doc.setFont('helvetica','bold'); doc.setFontSize(7); text(Y);
+    doc.text(r.saving,colX[4]+1,y+rh/2+1);
+    y+=rh;
+  });
+  y+=6;
+
+  // Summary box
+  fill('#0A1400'); stroke(Y); doc.setLineWidth(0.5);
+  doc.rect(6,y,W-12,14,'FD');
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); text(Y);
+  doc.text('TOTAL PROJECTED BENEFIT FROM ALL RECOMMENDATIONS',W/2,y+6,{align:'center'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); text(LGREY);
+  doc.text(`Monthly: Rs.${(result.monthly_savings+result.carbon_credit_value).toLocaleString()}   |   Annual: Rs.${result.annual_benefit.toLocaleString()}   |   CO2 Reduction: ${result.carbon_saved.toFixed(1)} tons/month`,W/2,y+11,{align:'center'});
+  y+=20;
+
+  // Carbon Credits section
+  y=sectionHead('Carbon Credit Opportunity — BEE Exchange',y);
+
+  // Pie chart: savings breakdown
+  const pieImg=await chartToBase64('doughnut',['Energy Savings','Carbon Credits'],[
+    {data:[result.monthly_savings,result.carbon_credit_value],backgroundColor:['rgba(182,255,74,0.8)','rgba(255,214,0,0.8)'],borderColor:['#B6FF4A','#FFD600'],borderWidth:2,hoverOffset:6},
+  ],{cutout:'62%',plugins:{legend:{display:true,labels:{color:'#5A6A5A',font:{size:12}}}}});
+  doc.addImage(pieImg,'PNG',6,y,70,58);
+
+  // CC table
+  const ccData=[
+    ['CO2 Saved / Month',`${result.carbon_saved.toFixed(1)} tons`,'vs AI-computed baseline'],
+    ['Credit Rate','Rs.750 / ton','BEE Exchange rate'],
+    ['Monthly Revenue',`Rs.${result.carbon_credit_value.toLocaleString()}`,'Direct earnings'],
+    ['Annual Revenue',`Rs.${(result.carbon_credit_value*12).toLocaleString()}`,'Projected FY'],
+    ['Certification','ISO 14064','Govt of India'],
+    ['Status','ELIGIBLE','Based on trajectory'],
+  ];
+  let ty=y;
+  fill(G); doc.rect(80,ty,W-86,7,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(6.5); text(INK);
+  doc.text('PARAMETER',82,ty+5); doc.text('VALUE',118,ty+5); doc.text('NOTES',148,ty+5);
+  ty+=7;
+  ccData.forEach(([a,b,c],i)=>{
+    fill(i%2===0?'#0A180A':MID); doc.rect(80,ty,W-86,7,'F');
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); text(LGREY); doc.text(a,82,ty+5);
+    doc.setFont('helvetica','bold'); text(G); doc.text(b,118,ty+5);
+    doc.setFont('helvetica','normal'); text(GREY); doc.text(c,148,ty+5);
+    ty+=7;
+  });
+
+  // ══════════ PAGE 4 — MACHINE HEALTH + FINANCIAL ══════════
+  onStep('Building machine health report...',75);
+  doc.addPage();
+  header('MACHINE HEALTH & FINANCIAL SUMMARY','',4,4);
+  y=26;
+  y=sectionHead('Machine Health Intelligence',y);
+
+  // Machine health horizontal bar chart
+  const mnames=result.machine_health.map(m=>m.name);
+  const mvals=result.machine_health.map(m=>m.health);
+  const mcols=result.machine_health.map(m=>m.status==='Good'?'rgba(182,255,74,0.75)':m.status==='Warning'?'rgba(255,214,0,0.75)':'rgba(255,68,68,0.75)');
+  const mbcols=result.machine_health.map(m=>m.status==='Good'?'#B6FF4A':m.status==='Warning'?'#FFD600':'#FF4444');
+  const machImg=await chartToBase64('bar',mnames,[
+    {label:'Health %',data:mvals,backgroundColor:mcols,borderColor:mbcols,borderWidth:1.5,borderRadius:3,indexAxis:'y'},
+  ],{indexAxis:'y',scales:{x:{grid:{color:'rgba(182,255,74,0.08)'},ticks:{color:'#5A6A5A',font:{size:10}},max:100},y:{grid:{display:false},ticks:{color:'#5A6A5A',font:{size:11,weight:'bold'}}}}});
+  doc.addImage(machImg,'PNG',6,y,W-12,52); y+=56;
+
+  // Machine table
+  const mth=['MACHINE','HEALTH','STATUS','kWh DRAW','NOTE'];
+  const mthW=[40,18,22,22,52];
+  const mthX=[6,46,64,86,108];
+  fill('#0D200D'); doc.rect(6,y,W-12,7,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(6.5); text(G);
+  mth.forEach((h,i)=>doc.text(h,mthX[i]+1,y+5));
+  y+=7;
+  result.machine_health.forEach((m,i)=>{
+    const rh=9;
+    fill(i%2===0?'#0A180A':MID); doc.rect(6,y,W-12,rh,'F');
+    const sc=m.status==='Good'?G:m.status==='Warning'?Y:R;
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+    text(WHITE); doc.text(m.name,mthX[0]+1,y+6);
+    doc.setFont('helvetica','bold'); text(sc); doc.text(`${m.health}%`,mthX[1]+1,y+6);
+    text(sc); doc.text(m.status,mthX[2]+1,y+6);
+    doc.setFont('helvetica','normal'); text(LGREY); doc.text(`${m.current_draw}`,mthX[3]+1,y+6);
+    const note=m.status==='Good'?'✓ Operating normally':m.status==='Warning'?'⚠ Schedule maintenance':'✗ Immediate inspection required';
+    text(sc); doc.text(note,mthX[4]+1,y+6);
+    y+=rh;
+  });
+  y+=6;
+
+  // Alerts
+  const crits=result.machine_health.filter(m=>m.status==='Critical');
+  const warns=result.machine_health.filter(m=>m.status==='Warning');
+  if(crits.length||warns.length){
+    y=sectionHead('Active Alerts & Action Required',y);
+    crits.forEach(m=>{
+      fill('#180505'); stroke(R); doc.setLineWidth(0.5); doc.rect(6,y,W-12,9,'FD');
+      doc.setFont('helvetica','bold'); doc.setFontSize(7); text(R);
+      doc.text(`CRITICAL: ${m.name} — Health at ${m.health}%. Immediate maintenance required. Current draw: ${m.current_draw} kWh`,9,y+6);
+      y+=11;
+    });
+    warns.forEach(m=>{
+      fill('#181000'); stroke(Y); doc.setLineWidth(0.5); doc.rect(6,y,W-12,9,'FD');
+      doc.setFont('helvetica','bold'); doc.setFontSize(7); text(Y);
+      doc.text(`WARNING: ${m.name} — Health at ${m.health}%. Schedule maintenance within 2 weeks.`,9,y+6);
+      y+=11;
+    });
+    y+=4;
+  }
+
+  // Financial Summary
+  y=sectionHead('Financial Impact Summary',y);
+  const finRows=[
+    ['Energy Cost Savings',`Rs.${result.monthly_savings.toLocaleString()}`,`Rs.${(result.monthly_savings*12).toLocaleString()}`,G],
+    ['Carbon Credit Earnings',`Rs.${result.carbon_credit_value.toLocaleString()}`,`Rs.${(result.carbon_credit_value*12).toLocaleString()}`,G],
+    ['TOTAL BENEFIT',`Rs.${(result.monthly_savings+result.carbon_credit_value).toLocaleString()}`,`Rs.${result.annual_benefit.toLocaleString()}`,Y],
+  ];
+  fill('#0D200D'); doc.rect(6,y,W-12,7,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(7); text(G);
+  doc.text('CATEGORY',8,y+5); doc.text('MONTHLY',90,y+5); doc.text('ANNUAL',140,y+5);
+  y+=7;
+  finRows.forEach(([cat,mo,yr,col],i)=>{
+    const rh=i===2?12:9;
+    if(i===2){fill('#0A1400'); stroke(Y); doc.setLineWidth(0.8); doc.rect(6,y,W-12,rh,'FD');}
+    else{fill(i%2===0?'#0A180A':MID); doc.rect(6,y,W-12,rh,'F');}
+    doc.setFont(i===2?'helvetica-bold':'helvetica','normal'); doc.setFontSize(i===2?9:8);
+    text(i===2?Y:WHITE); doc.text(cat,8,y+rh/2+2);
+    doc.setFont('helvetica','bold'); doc.setFontSize(i===2?10:8.5); text(col);
+    doc.text(mo,90,y+rh/2+2); doc.text(yr,140,y+rh/2+2);
+    y+=rh;
+  });
+  y+=8;
+
+  // Disclaimer
+  doc.setFont('helvetica','normal'); doc.setFontSize(6); text(GREY);
+  const disc=doc.splitTextToSize('DISCLAIMER: All projections are based on AI model analysis of current operational data. Actual results may vary based on implementation quality, market conditions, and operational changes. Carbon credit values based on current BEE Exchange rates. This report is confidential and intended for management use only.',W-14);
+  doc.text(disc,8,y);
+
+  onStep('Finalizing PDF...',92);
+  return doc;
+}
+
+// ─── PDF PROGRESS COMPONENT ──────────────────────────────
+function PdfOverlay({step,pct,onClose}){
+  return(
+    <div className="pdf-overlay">
+      <div className="pdf-box">
+        <div className="pdf-title">GENERATING REPORT</div>
+        <div className="pdf-sub">Please wait — building your premium PDF...</div>
+        <div className="pdf-bar-wrap"><div className="pdf-bar-fill" style={{width:`${pct}%`}}/></div>
+        <div className="pdf-step">{step}</div>
+        {pct===100&&<button className="btnp" style={{marginTop:'20px',width:'100%'}} onClick={onClose}>CLOSE</button>}
+      </div>
+    </div>
+  );
+}
+
+// ─── DASHBOARD CONTENT ────────────────────────────────────
+function DashContent({result}){
+  if(!result)return(
+    <div style={{textAlign:'center',padding:'76px 20px',color:'var(--smoke)'}}>
+      <div style={{fontSize:'2.8rem',marginBottom:'14px',opacity:0.15}}>◈</div>
+      <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:'1.15rem',letterSpacing:'3px',marginBottom:'5px',color:'var(--smoke)'}}>ENTER FACTORY DATA</div>
+      <div style={{fontSize:'0.6rem',letterSpacing:'2px',color:'var(--fog)'}}>Fill parameters above and click PREDICT & ANALYZE</div>
+    </div>
+  );
+  const sc=result.carbon_score;
+  const scCol=sc>70?'var(--g)':sc>40?'var(--y)':'var(--r)';
+  const scLbl=sc>70?'EXCELLENT':sc>40?'MODERATE':'CRITICAL';
+  const deg=(sc/100)*360;
+  return(
+    <div>
+      <div className="kpi-g">
+        <div className="kpi"><span className="kpi-ic">🏭</span><div className="kpi-v">{result.carbon_emissions}t</div><div className="kpi-l">Carbon Emissions</div><div className="kpi-s">Target: {result.optimal_carbon}t</div></div>
+        <div className="kpi"><span className="kpi-ic">⚡</span><div className="kpi-v">{result.energy_saved_kwh}</div><div className="kpi-l">kWh Saved/Month</div><div className="kpi-s">25% reduction</div></div>
+        <div className="kpi"><span className="kpi-ic">💰</span><div className="kpi-v">₹{(result.monthly_savings/1000).toFixed(0)}K</div><div className="kpi-l">Monthly Savings</div><div className="kpi-s">Energy cost cut</div></div>
+        <div className="kpi"><span className="kpi-ic">🌿</span><div className="kpi-v">{result.carbon_saved.toFixed(1)}t</div><div className="kpi-l">CO₂ Reduced</div><div className="kpi-s">vs current baseline</div></div>
+        <div className="kpi"><span className="kpi-ic">📊</span><div className="kpi-v">₹{(result.carbon_credit_value/1000).toFixed(0)}K</div><div className="kpi-l">Carbon Credits</div><div className="kpi-s">BEE exchange value</div></div>
+        <div className="kpi"><span className="kpi-ic">🚀</span><div className="kpi-v">₹{(result.annual_benefit/100000).toFixed(1)}L</div><div className="kpi-l">Annual Benefit</div><div className="kpi-s">Combined projection</div></div>
+      </div>
+      <div className="two">
+        <div className="card"><div className="clbl">CARBON TREND — 30 DAYS</div><LineChart labels={result.trend.dates} data={result.trend.carbon} label="CO₂ (tons)" color="#B6FF4A"/></div>
+        <div className="card"><div className="clbl">ENERGY CONSUMPTION — 30 DAYS</div><BarChart labels={result.trend.dates} data={result.trend.energy} label="kWh" color="#FFD600"/></div>
+      </div>
+      <div className="three">
+        <div className="card" style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'250px'}}>
+          <div className="clbl">CARBON SCORE</div>
+          <div className="sring" style={{'--deg':`${deg}deg`}}>
+            <div className="sn" style={{color:scCol}}>{sc}</div>
+            <div className="sof">/ 100</div>
+          </div>
+          <div className="slbl" style={{color:scCol}}>{scLbl}</div>
+          <div style={{marginTop:'9px',fontSize:'0.58rem',color:'var(--smoke)',textAlign:'center',lineHeight:'1.8'}}>
+            Target: <span style={{color:'var(--g)'}}>{result.optimal_carbon}t</span><br/>
+            Current: <span style={{color:'var(--r)'}}>{result.carbon_emissions}t</span>
+          </div>
+        </div>
+        <div className="card">
+          <div className="clbl">AI RECOMMENDATIONS</div>
+          {result.recommendations.map((r,i)=>{
+            const bc=r.priority==='HIGH'?'bH':r.priority==='MEDIUM'?'bM':'bO';
+            const bl=r.priority==='HIGH'?'var(--r)':r.priority==='MEDIUM'?'var(--y)':'var(--g)';
+            return(<div key={i} className="rec" style={{borderLeftColor:bl}}>
+              <div className="rec-top"><span className="rec-ttl">{r.title}</span><span className={`badge ${bc}`}>{r.priority}</span></div>
+              <div className="rec-desc">{r.desc}</div>
+              <div className="rec-save">⬡ {r.saving}</div>
+            </div>);
+          })}
+        </div>
+      </div>
+      <div className="cred-row">
+        <div className="cred-box"><div className="cred-v">{result.carbon_saved.toFixed(1)}t</div><div className="cred-l">CO₂ Saved/Month</div></div>
+        <div className="cred-box"><div className="cred-v">₹{result.carbon_credit_value.toLocaleString()}</div><div className="cred-l">Carbon Credit Value</div></div>
+        <div className="cred-box amb"><div className="cred-v">₹{(result.annual_benefit/100000).toFixed(1)}L</div><div className="cred-l">Annual Total Benefit</div></div>
+      </div>
+      <div className="card">
+        <div className="clbl">MACHINE HEALTH MONITOR</div>
+        <div className="mach-g">
+          {result.machine_health.map((m,i)=>{
+            const cls=m.status==='Good'?'mG':m.status==='Warning'?'mY':'mR';
+            const col=m.status==='Good'?'var(--g)':m.status==='Warning'?'var(--y)':'var(--r)';
+            const stcls=m.status==='Good'?'stG':m.status==='Warning'?'stY':'stR';
+            return(<div key={i} className={`mach ${cls}`}>
+              <div className="mach-nm">⚙ {m.name}</div>
+              <div className="mach-pct" style={{color:col}}>{m.health}%</div>
+              <div className="mach-bar"><div className="mach-fill" style={{width:`${m.health}%`}}/></div>
+              <div className={`mach-st ${stcls}`}>{m.status.toUpperCase()}</div>
+              <div className="mach-kw">{m.current_draw} kWh</div>
+            </div>);
+          })}
+        </div>
+      </div>
+      <div className="annual">
+        <div className="ann-ic">💡</div>
+        <div className="ann-txt">
+          <div className="ann-ttl">TOTAL POTENTIAL ANNUAL BENEFIT</div>
+          <div className="ann-sub">// Energy savings + Carbon credit market combined projection</div>
+        </div>
+        <div className="ann-val">₹{(result.annual_benefit/100000).toFixed(1)}L / yr</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── ANALYZE PAGE ─────────────────────────────────────────
+function Analyze({token}){
+  const[tab,setTab]=useState('manual');
+  const[load,setLoad]=useState(false);
+  const[result,setResult]=useState(null);
+  const[pdfStep,setPdfStep]=useState(null);
+  const[pdfPct,setPdfPct]=useState(0);
+  const[form,setForm]=useState({factory_name:'My Factory',units:500,energy:1000,renewable:20,downtime:5,efficiency:75,energy_cost:8});
+  const fields=[
+    {k:'factory_name',l:'Factory Name',t:'text'},
+    {k:'units',l:'Units Produced',t:'number'},
+    {k:'energy',l:'Energy (kWh)',t:'number'},
+    {k:'renewable',l:'Renewable %',t:'number'},
+    {k:'downtime',l:'Downtime (hrs)',t:'number'},
+    {k:'efficiency',l:'Efficiency Index',t:'number'},
+    {k:'energy_cost',l:'Cost (₹/kWh)',t:'number'},
+  ];
+  const analyze=async()=>{
+    setLoad(true);
+    try{
+      const r=await fetch(`${API}/api/analyze`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify(form)});
+      if(r.ok)setResult(await r.json());else setResult(localAnalyze(form));
+    }catch{setResult(localAnalyze(form));}
+    setLoad(false);
+  };
+
+  const downloadPDF=async()=>{
+    if(!result)return;
+    setPdfStep('Initialising PDF engine...');setPdfPct(5);
+    try{
+      const doc=await generatePremiumPDF(result,form,(step,pct)=>{setPdfStep(step);setPdfPct(pct);});
+      setPdfPct(100);setPdfStep('✓ Complete! Downloading...');
+      setTimeout(()=>{
+        doc.save(`EcoCore_Premium_Report_${form.factory_name.replace(/\s/g,'_')}.pdf`);
+        setTimeout(()=>setPdfStep(null),1500);
+      },400);
+    }catch(e){console.error(e);setPdfStep(null);alert('PDF error. Please try again.');}
+  };
+
+  const handleFile=async(e)=>{
+    const file=e.target.files[0];if(!file)return;
+    setLoad(true);
+    try{
+      const fd=new FormData();fd.append('file',file);
+      const r=await fetch(`${API}/api/upload`,{method:'POST',headers:{'Authorization':`Bearer ${token}`},body:fd});
+      if(r.ok){const d=await r.json();if(d.factories?.length)setResult(d.factories[0]);}
+      else alert('Upload requires backend connection');
+    }catch{alert('Upload requires backend. Use manual input mode!');}
+    setLoad(false);
+  };
+
+  return(
+    <div>
+      {pdfStep&&<PdfOverlay step={pdfStep} pct={pdfPct} onClose={()=>setPdfStep(null)}/>}
+      <div className="ph"><div className="ph-eye">// DASHBOARD</div><div className="ph-title"><em>EcoCore</em> AI Analysis</div><div className="ph-sub">AI-powered industrial energy & carbon optimization engine</div></div>
+      <div className="tabs">
+        {[{id:'manual',l:'✏  MANUAL INPUT'},{id:'upload',l:'◈  UPLOAD FILE'}].map(t=>(
+          <button key={t.id} className={`tabb ${tab===t.id?'on':''}`} onClick={()=>setTab(t.id)}>{t.l}</button>
+        ))}
+      </div>
+      {tab==='manual'&&(
+        <div className="card" style={{marginBottom:'13px'}}>
+          <div className="clbl">FACTORY PARAMETERS</div>
+          <div className="form-g">
+            {fields.map(f=>(
+              <div key={f.k}>
+                <label className="fglbl">{f.l}</label>
+                <input className="fginp" type={f.t} value={form[f.k]} onChange={e=>setForm({...form,[f.k]:f.t==='number'?parseFloat(e.target.value)||0:e.target.value})}/>
+              </div>
+            ))}
+          </div>
+          <div style={{display:'flex',gap:'9px',marginTop:'18px',flexWrap:'wrap'}}>
+            <button className="btnp" onClick={analyze} disabled={load} style={{flex:1,minWidth:'170px'}}>{load?'⏳ ANALYZING...':'▶ PREDICT & ANALYZE'}</button>
+            {result&&(
+              <button className="btnpdf" onClick={downloadPDF} style={{flex:1,minWidth:'170px'}}>
+                <span>📄</span> DOWNLOAD PREMIUM PDF
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+      {tab==='upload'&&(
+        <div className="card" style={{marginBottom:'13px'}}>
+          <div className="clbl">UPLOAD FACTORY DATA</div>
+          <label className="drop">
+            <div className="drop-ic">◈</div>
+            <div className="drop-ttl">DROP CSV OR EXCEL FILE</div>
+            <div className="drop-sub">Required: factory_name, energy, units<br/>Optional: renewable, downtime, efficiency, date</div>
+            <input type="file" accept=".csv,.xlsx,.xls" onChange={handleFile} style={{display:'none'}}/>
+          </label>
+        </div>
+      )}
+      {load&&<div className="lwrap2"><div className="spin"/><div className="ltxt">ANALYZING FACTORY DATA...</div></div>}
+      {!load&&<DashContent result={result}/>}
+    </div>
+  );
+}
+
+// ─── FACTORIES PAGE ───────────────────────────────────────
+function Factories(){
+  const factories=[
+    {name:'Factory Alpha',loc:'Pune, Maharashtra',score:82,carbon:34.2,energy:1850,efficiency:88,status:'Good',renewable:42},
+    {name:'Factory Beta',loc:'Nashik, Maharashtra',score:61,carbon:67.8,energy:3200,efficiency:71,status:'Warning',renewable:18},
+    {name:'Factory Gamma',loc:'Aurangabad, MH',score:45,carbon:98.4,energy:4100,efficiency:58,status:'Critical',renewable:8},
+    {name:'Factory Delta',loc:'Kolhapur, Maharashtra',score:75,carbon:48.1,energy:2300,efficiency:79,status:'Good',renewable:35},
+    {name:'Factory Epsilon',loc:'Nagpur, Maharashtra',score:53,carbon:81.5,energy:3600,efficiency:64,status:'Warning',renewable:22},
+    {name:'Factory Zeta',loc:'Solapur, Maharashtra',score:91,carbon:22.3,energy:1200,efficiency:94,status:'Good',renewable:58},
+  ];
+  const totalCarbon=factories.reduce((a,f)=>a+f.carbon,0);
+  const avgScore=(factories.reduce((a,f)=>a+f.score,0)/factories.length).toFixed(0);
+  const goodCount=factories.filter(f=>f.status==='Good').length;
+  return(
+    <div>
+      <div className="ph"><div className="ph-eye">// MULTI-FACTORY NETWORK</div><div className="ph-title"><em>Factory</em> Dashboard</div><div className="ph-sub">Real-time monitoring across all industrial units</div></div>
+      <div className="kpi-g" style={{marginBottom:'13px'}}>
+        <div className="kpi"><span className="kpi-ic">🏭</span><div className="kpi-v">{factories.length}</div><div className="kpi-l">Total Factories</div></div>
+        <div className="kpi"><span className="kpi-ic">✅</span><div className="kpi-v">{goodCount}</div><div className="kpi-l">Operating Well</div></div>
+        <div className="kpi"><span className="kpi-ic">🌫</span><div className="kpi-v">{totalCarbon.toFixed(0)}t</div><div className="kpi-l">Total CO₂/Month</div></div>
+        <div className="kpi"><span className="kpi-ic">📊</span><div className="kpi-v">{avgScore}</div><div className="kpi-l">Avg Carbon Score</div></div>
+      </div>
+      <div className="fac-grid">
+        {factories.map((f,i)=>{
+          const sc=f.status==='Good'?'fs-g':f.status==='Warning'?'fs-w':'fs-c';
+          return(
+            <div key={i} className="fac-card">
+              <div className={`fst ${sc}`}>{f.status.toUpperCase()}</div>
+              <div className="fac-nm">{f.name}</div>
+              <div className="fac-loc">📍 {f.loc}</div>
+              <div className="fkpi-row">
+                <div className="fkpi"><div className="fkpi-v">{f.carbon}t</div><div className="fkpi-l">CO₂/mo</div></div>
+                <div className="fkpi"><div className="fkpi-v">{f.efficiency}%</div><div className="fkpi-l">Effic.</div></div>
+                <div className="fkpi"><div className="fkpi-v">{f.renewable}%</div><div className="fkpi-l">Renew.</div></div>
+              </div>
+              <div className="fac-bar"><div className="fac-fill" style={{width:`${f.score}%`}}/></div>
+              <div className="fac-row"><span>Carbon Score</span><span style={{color:'var(--g)'}}>{f.score}/100</span></div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── CARBON CREDITS PAGE ──────────────────────────────────
+function CarbonCredits(){
+  const transactions=[
+    {id:'TXN-001',factory:'Factory Alpha',credits:12.4,value:'₹93,000',date:'2026-04-08',status:'Active'},
+    {id:'TXN-002',factory:'Factory Zeta',credits:22.1,value:'₹1,65,750',date:'2026-04-05',status:'Active'},
+    {id:'TXN-003',factory:'Factory Delta',credits:8.7,value:'₹65,250',date:'2026-03-28',status:'Pending'},
+    {id:'TXN-004',factory:'Factory Beta',credits:4.2,value:'₹31,500',date:'2026-03-20',status:'Active'},
+    {id:'TXN-005',factory:'Factory Epsilon',credits:6.8,value:'₹51,000',date:'2026-03-15',status:'Pending'},
+  ];
+  const monthlyLabels=['Nov','Dec','Jan','Feb','Mar','Apr'];
+  const monthlyCredits=[18,24,31,28,42,54];
+  const monthlyVal=[135000,180000,232500,210000,315000,405000];
+  return(
+    <div>
+      <div className="ph"><div className="ph-eye">// CARBON CREDIT SYSTEM</div><div className="ph-title"><em>Carbon</em> Credits</div><div className="ph-sub">BEE Carbon Market — Track, trade & maximize carbon credit earnings</div></div>
+      <div className="cc-hero"><div className="cc-hero-ttl">CARBON CREDIT PORTFOLIO</div><div className="cc-hero-sub">Registered on BEE Carbon Exchange • Active since April 2025<br/>Next audit: June 2026 • Certification: ISO 14064</div></div>
+      <div className="cc-stats">
+        <div className="cc-stat"><div className="cc-stat-v">54.2t</div><div className="cc-stat-l">Credits Earned (Apr)</div></div>
+        <div className="cc-stat"><div className="cc-stat-v" style={{color:'var(--y)'}}>₹4.06L</div><div className="cc-stat-l">Revenue (Apr)</div></div>
+        <div className="cc-stat"><div className="cc-stat-v">247t</div><div className="cc-stat-l">Total YTD Credits</div></div>
+        <div className="cc-stat"><div className="cc-stat-v" style={{color:'var(--y)'}}>₹18.5L</div><div className="cc-stat-l">Total YTD Revenue</div></div>
+      </div>
+      <div className="two">
+        <div className="card"><div className="clbl">MONTHLY CREDITS (tons)</div><BarChart labels={monthlyLabels} data={monthlyCredits} label="Credits (t)" color="#B6FF4A"/></div>
+        <div className="card"><div className="clbl">MONTHLY REVENUE (₹)</div><LineChart labels={monthlyLabels} data={monthlyVal} label="Revenue (₹)" color="#FFD600"/></div>
+      </div>
+      <div className="card">
+        <div className="clbl">TRANSACTION HISTORY</div>
+        <table className="cc-table">
+          <thead><tr><th>ID</th><th>FACTORY</th><th>CREDITS</th><th>VALUE</th><th>DATE</th><th>STATUS</th></tr></thead>
+          <tbody>
+            {transactions.map((t,i)=>(
+              <tr key={i}>
+                <td style={{color:'var(--g)',fontFamily:"'Bebas Neue',sans-serif",letterSpacing:'1px'}}>{t.id}</td>
+                <td style={{color:'var(--w)'}}>{t.factory}</td>
+                <td>{t.credits}t</td>
+                <td style={{color:'var(--y)'}}>{t.value}</td>
+                <td>{t.date}</td>
+                <td><span className={`cc-pill ${t.status==='Active'?'cc-a':'cc-p'}`}>{t.status}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ─── MACHINES PAGE ────────────────────────────────────────
+function Machines(){
+  const machines=[
+    {name:'Compressor A',type:'Air Compressor',health:88,status:'Good',temp:72,pressure:8.2,current_draw:245,lastService:'2026-02-15',nextService:'2026-08-15',alerts:[]},
+    {name:'Boiler B',type:'Steam Boiler',health:71,status:'Warning',temp:185,pressure:12.4,current_draw:380,lastService:'2025-11-20',nextService:'2026-05-20',alerts:['Pressure slightly elevated','Schedule maintenance soon']},
+    {name:'Motor C',type:'Drive Motor',health:94,status:'Good',temp:58,pressure:null,current_draw:180,lastService:'2026-03-01',nextService:'2026-09-01',alerts:[]},
+    {name:'Conveyor D',type:'Belt Conveyor',health:56,status:'Warning',temp:44,pressure:null,current_draw:120,lastService:'2025-10-10',nextService:'2026-04-10',alerts:['Belt tension low','Vibration detected']},
+    {name:'Pump E',type:'Coolant Pump',health:34,status:'Critical',temp:98,pressure:4.1,current_draw:290,lastService:'2025-08-05',nextService:'OVERDUE',alerts:['Temperature critical!','Immediate inspection required']},
+    {name:'Generator F',type:'Backup Generator',health:79,status:'Good',temp:65,pressure:null,current_draw:0,lastService:'2026-01-20',nextService:'2026-07-20',alerts:[]},
+  ];
+  const overall=(machines.reduce((a,m)=>a+m.health,0)/machines.length).toFixed(0);
+  const crit=machines.filter(m=>m.status==='Critical').length;
+  const warn=machines.filter(m=>m.status==='Warning').length;
+  return(
+    <div>
+      <div className="ph"><div className="ph-eye">// MACHINE HEALTH MONITOR</div><div className="ph-title"><em>Machine</em> Intelligence</div><div className="ph-sub">Real-time predictive maintenance & health monitoring</div></div>
+      <div className="kpi-g" style={{marginBottom:'13px'}}>
+        <div className="kpi"><span className="kpi-ic">⚙</span><div className="kpi-v">{machines.length}</div><div className="kpi-l">Total Machines</div></div>
+        <div className="kpi"><span className="kpi-ic">💚</span><div className="kpi-v">{overall}%</div><div className="kpi-l">Overall Health</div></div>
+        <div className="kpi"><span className="kpi-ic">⚠</span><div className="kpi-v" style={{color:'var(--y)'}}>{warn}</div><div className="kpi-l">Warnings</div></div>
+        <div className="kpi"><span className="kpi-ic">🔴</span><div className="kpi-v" style={{color:'var(--r)'}}>{crit}</div><div className="kpi-l">Critical</div></div>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(235px,1fr))',gap:'13px'}}>
+        {machines.map((m,i)=>{
+          const cls=m.status==='Good'?'mGf':m.status==='Warning'?'mYf':'mRf';
+          const col=m.status==='Good'?'var(--g)':m.status==='Warning'?'var(--y)':'var(--r)';
+          const sc=m.status==='Good'?'fs-g':m.status==='Warning'?'fs-w':'fs-c';
+          return(
+            <div key={i} className={`mach-full ${cls}`}>
+              <div className="mfhd">
+                <div><div className="mfnm">{m.name}</div><div style={{fontSize:'0.56rem',color:'var(--smoke)',letterSpacing:'1px',marginTop:'1px'}}>{m.type}</div></div>
+                <span className={`fst ${sc}`}>{m.status.toUpperCase()}</span>
+              </div>
+              <div className="mparams">
+                <div className="mp"><div className="mp-v" style={{color:col}}>{m.health}%</div><div className="mp-l">HEALTH</div></div>
+                <div className="mp"><div className="mp-v">{m.temp}°C</div><div className="mp-l">TEMP</div></div>
+                {m.pressure&&<div className="mp"><div className="mp-v">{m.pressure}</div><div className="mp-l">PRESSURE</div></div>}
+                <div className="mp"><div className="mp-v">{m.current_draw}</div><div className="mp-l">kWh DRAW</div></div>
+              </div>
+              <div className="mfbar"><div className="mffill" style={{width:`${m.health}%`}}/></div>
+              <div style={{fontSize:'0.56rem',color:'var(--smoke)',marginBottom:'7px',display:'flex',justifyContent:'space-between'}}>
+                <span>Last: {m.lastService}</span>
+                <span style={{color:m.nextService==='OVERDUE'?'var(--r)':'var(--smoke)'}}>Next: {m.nextService}</span>
+              </div>
+              {m.alerts.map((a,j)=><div key={j} className="malert">⚠ {a}</div>)}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── REPORTS PAGE ─────────────────────────────────────────
+function Reports({token}){
+  const reports=[
+    {ic:'📄',name:'Monthly Energy Report — April 2026',meta:'Generated: Apr 10, 2026 • All Factories • 24 pages',type:'MONTHLY'},
+    {ic:'📄',name:'Carbon Audit Report Q1 2026',meta:'Generated: Mar 31, 2026 • Certified • 48 pages',type:'QUARTERLY'},
+    {ic:'📄',name:'Machine Health Summary — March 2026',meta:'Generated: Mar 31, 2026 • 6 Machines • 12 pages',type:'HEALTH'},
+    {ic:'📄',name:'Carbon Credit Statement — Q1 2026',meta:'Generated: Mar 31, 2026 • BEE Certified • 8 pages',type:'CREDITS'},
+    {ic:'📄',name:'Factory Beta — Optimisation Report',meta:'Generated: Mar 15, 2026 • AI Recs • 16 pages',type:'ANALYSIS'},
+  ];
+  const typCol={MONTHLY:'var(--g)',QUARTERLY:'var(--y)',HEALTH:'var(--r)',CREDITS:'var(--g)',ANALYSIS:'var(--y)'};
+  const[form,setForm]=useState({factory_name:'All Factories',units:500,energy:2000,renewable:25,downtime:4,efficiency:78,energy_cost:8});
+  const[pdfStep,setPdfStep]=useState(null);const[pdfPct,setPdfPct]=useState(0);
+  const genPDF=async()=>{
+    const result=localAnalyze(form);
+    setPdfStep('Initialising...');setPdfPct(5);
+    try{
+      const doc=await generatePremiumPDF(result,form,(s,p)=>{setPdfStep(s);setPdfPct(p);});
+      setPdfPct(100);setPdfStep('✓ Complete! Downloading...');
+      setTimeout(()=>{doc.save(`EcoCore_Report_${form.factory_name.replace(/\s/g,'_')}.pdf`);setTimeout(()=>setPdfStep(null),1200);},400);
+    }catch(e){setPdfStep(null);alert('PDF error.');}
+  };
+  return(
+    <div>
+      {pdfStep&&<PdfOverlay step={pdfStep} pct={pdfPct} onClose={()=>setPdfStep(null)}/>}
+      <div className="ph"><div className="ph-eye">// REPORTS & ANALYTICS</div><div className="ph-title"><em>Report</em> Center</div><div className="ph-sub">Download certified energy & carbon analysis reports</div></div>
+      <div className="card" style={{marginBottom:'13px'}}>
+        <div className="clbl">GENERATE NEW PREMIUM REPORT</div>
+        <div style={{display:'flex',gap:'10px',alignItems:'flex-end',flexWrap:'wrap'}}>
+          <div style={{flex:1,minWidth:'140px'}}><label className="fglbl">Factory Name</label><input className="fginp" value={form.factory_name} onChange={e=>setForm({...form,factory_name:e.target.value})}/></div>
+          <div style={{flex:1,minWidth:'110px'}}><label className="fglbl">Energy (kWh)</label><input className="fginp" type="number" value={form.energy} onChange={e=>setForm({...form,energy:parseFloat(e.target.value)||0})}/></div>
+          <div style={{flex:1,minWidth:'110px'}}><label className="fglbl">Efficiency %</label><input className="fginp" type="number" value={form.efficiency} onChange={e=>setForm({...form,efficiency:parseFloat(e.target.value)||0})}/></div>
+          <div style={{flex:1,minWidth:'110px'}}><label className="fglbl">Renewable %</label><input className="fginp" type="number" value={form.renewable} onChange={e=>setForm({...form,renewable:parseFloat(e.target.value)||0})}/></div>
+          <button className="btnpdf" onClick={genPDF} style={{whiteSpace:'nowrap'}}>📄 GENERATE PREMIUM PDF</button>
+        </div>
+        <div style={{marginTop:'9px',fontSize:'0.6rem',color:'var(--smoke)'}}>✓ 4-page premium report with charts — works fully offline, no backend needed!</div>
+      </div>
+      <div className="card">
+        <div className="clbl">PAST REPORTS</div>
+        {reports.map((r,i)=>(
+          <div key={i} className="rep-item">
+            <div className="rep-ic">{r.ic}</div>
+            <div className="rep-info"><div className="rep-ttl">{r.name}</div><div className="rep-meta">{r.meta}</div></div>
+            <span className="badge bO" style={{color:typCol[r.type],marginRight:'8px'}}>{r.type}</span>
+            <button className="rep-dl">⬇ DOWNLOAD</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── SETTINGS PAGE ────────────────────────────────────────
+function Settings(){
+  const[toggles,setToggles]=useState({alerts:true,autoReport:false,mlModel:true,realtime:true,darkMode:true,notifications:false});
+  const[apiUrl,setApiUrl]=useState('https://ecocore-api.onrender.com');
+  const[threshold,setThreshold]=useState(75);
+  const toggle=k=>setToggles(t=>({...t,[k]:!t[k]}));
+  return(
+    <div>
+      <div className="ph"><div className="ph-eye">// SYSTEM CONFIGURATION</div><div className="ph-title"><em>Settings</em></div><div className="ph-sub">Configure EcoCore AI system preferences and integrations</div></div>
+      <div className="set-grid">
+        <div className="card">
+          <div className="clbl">SYSTEM PREFERENCES</div>
+          {[
+            {k:'alerts',l:'Health Alerts',s:'Notifications for machine warnings'},
+            {k:'autoReport',l:'Auto Monthly Report',s:'Generate reports on month end'},
+            {k:'mlModel',l:'ML Model (Advanced)',s:'Use RandomForest AI for predictions'},
+            {k:'realtime',l:'Real-time Updates',s:'Live data refresh every 30s'},
+            {k:'darkMode',l:'Dark Mode',s:'Industrial dark theme (recommended)'},
+            {k:'notifications',l:'Email Notifications',s:'Alerts to registered email'},
+          ].map(({k,l,s})=>(
+            <div key={k} className="set-row">
+              <div><div className="set-lbl">{l}</div><div className="set-sub">{s}</div></div>
+              <button className={`toggle ${toggles[k]?'on':''}`} onClick={()=>toggle(k)}/>
+            </div>
+          ))}
+        </div>
+        <div>
+          <div className="card">
+            <div className="clbl">BACKEND CONNECTION</div>
+            <label className="fglbl">Backend API URL</label>
+            <input className="fginp" value={apiUrl} onChange={e=>setApiUrl(e.target.value)} style={{marginBottom:'10px'}}/>
+            <div style={{display:'flex',gap:'8px',flexWrap:'wrap',marginBottom:'12px'}}>
+              <button className="btnp" style={{fontSize:'0.68rem',padding:'7px 14px'}}>TEST CONNECTION</button>
+              <button className="btns" style={{fontSize:'0.68rem',padding:'7px 14px'}}>SAVE URL</button>
+            </div>
+            <div style={{fontSize:'0.6rem',color:'var(--smoke)',lineHeight:'1.9'}}>
+              <span style={{color:'var(--g)'}}>// Deploy to Render.com:</span><br/>
+              1. Upload backend files to GitHub<br/>
+              2. New Web Service on Render<br/>
+              3. Start: <span style={{color:'var(--g)'}}>uvicorn main:app --host 0.0.0.0</span><br/>
+              4. Paste URL above &amp; save
+            </div>
+          </div>
+          <div className="card">
+            <div className="clbl">ALERT THRESHOLDS</div>
+            {[['Machine Health Warning','Alert below %',threshold,setThreshold],['Carbon Score Critical','Alert below score',40,null],['Energy Spike','Alert above kWh',5000,null]].map(([l,s,v,set],i)=>(
+              <div key={i} className="set-row">
+                <div><div className="set-lbl">{l}</div><div className="set-sub">{s}</div></div>
+                <input className="sinp" type="number" defaultValue={v} style={{width:'72px'}} onChange={set?e=>set(e.target.value):undefined}/>
+              </div>
+            ))}
+            <button className="btnp" style={{marginTop:'12px',fontSize:'0.68rem',padding:'7px 18px'}}>SAVE THRESHOLDS</button>
+          </div>
+          <div className="card">
+            <div className="clbl">TEAM ECOOPTIMIZER</div>
+            <div style={{fontSize:'0.63rem',color:'var(--smoke)',lineHeight:'2.1'}}>
+              <span style={{color:'var(--g)'}}>Project:</span> EcoCore AI v6<br/>
+              <span style={{color:'var(--g)'}}>Institute:</span> MMIT Pune<br/>
+              <span style={{color:'var(--g)'}}>Stack:</span> React + FastAPI + Scikit-learn<br/>
+              <span style={{color:'var(--g)'}}>PDF:</span> jsPDF (offline, no backend)<br/>
+              <span style={{color:'var(--g)'}}>Version:</span> 6.0.0 — April 2026
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── APP ─────────────────────────────────────────────────
+function App(){
+  const[user,setUser]=useState(null);
+  const[page,setPage]=useState('dash');
+  const[u,setU]=useState('');const[p,setP]=useState('');
+  const[err,setErr]=useState('');const[load,setLoad]=useState(false);
+
+  useEffect(()=>{
+    const t=localStorage.getItem('eco_token');const un=localStorage.getItem('eco_user');
+    if(t&&un)setUser({token:t,username:un});
+  },[]);
+
+  // ── FIXED LOGIN: try local first, backend optional ──
+  const submit=async()=>{
+    if(!u.trim()||!p.trim()){setErr('Please enter username and password');return;}
+    setLoad(true);setErr('');
+
+    // 1. Try offline local login first (instant, no network)
+    if(USERS[u]===p){
+      const tok='local_'+Date.now();
+      localStorage.setItem('eco_token',tok);
+      localStorage.setItem('eco_user',u);
+      setUser({token:tok,username:u});
+      setLoad(false);return;
+    }
+
+    // 2. Try backend (optional)
+    try{
+      const r=await fetch(`${API}/api/login`,{method:'POST',signal:AbortSignal.timeout(4000),headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+      if(r.ok){const d=await r.json();localStorage.setItem('eco_token',d.token);localStorage.setItem('eco_user',d.username);setUser({token:d.token,username:d.username});setLoad(false);return;}
+    }catch{}
+
+    setErr('Invalid credentials. Try: admin / admin123');
+    setLoad(false);
+  };
+
+  const logout=()=>{localStorage.removeItem('eco_token');localStorage.removeItem('eco_user');setUser(null);setU('');setP('');setErr('');};
+
+  if(!user) return(
+    <div className="lwrap">
+      <div className="lbox">
+        <div className="ltop"/>
+        <div className="lbody">
+          <div className="llogo">ECO<em>CORE</em></div>
+          <div className="ltag">// INDUSTRIAL ENERGY INTELLIGENCE v6</div>
+          {err&&<div className="lerr">{err}</div>}
+          <div className="lf"><label>USERNAME</label><input value={u} onChange={e=>setU(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()} autoFocus placeholder="admin"/></div>
+          <div className="lf"><label>PASSWORD</label><input type="password" value={p} onChange={e=>setP(e.target.value)} onKeyDown={e=>e.key==='Enter'&&submit()} placeholder="admin123"/></div>
+          <button className="lbtn" onClick={submit} disabled={load}>{load?'AUTHENTICATING...':'INITIALIZE SESSION'}</button>
+          <div className="lhint">Demo: <span>admin</span> / <span>admin123</span> &nbsp;|&nbsp; <span>factory1</span> / <span>pass123</span></div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const navTabs=[
+    {id:'dash',l:'⚡ ENERGY'},{id:'carbon',l:'🌿 CARBON'},{id:'factories',l:'🏭 FACTORIES'},
+    {id:'machines',l:'⚙ MACHINES'},{id:'reports',l:'📄 REPORTS'},{id:'settings',l:'◉ SETTINGS'},
+  ];
+  const navItems=[
+    {id:'dash',ic:'◈',l:'Dashboard'},{id:'factories',ic:'⬡',l:'Factories',badge:'NEW'},
+    {id:'carbon',ic:'◇',l:'Carbon Credits'},{id:'machines',ic:'⚙',l:'Machines'},
+    {id:'reports',ic:'▣',l:'Reports'},{id:'settings',ic:'◉',l:'Settings'},
+  ];
+
+  return(
+    <div>
+      <nav className="nav">
+        <div className="nlogo">ECO<em>CORE</em><sup>v6</sup></div>
+        <div className="ndiv"/>
+        <div className="ntabs">
+          {navTabs.map(t=><button key={t.id} className={`ntab ${page===t.id?'on':''}`} onClick={()=>setPage(t.id)}>{t.l}</button>)}
+        </div>
+        <div className="nr">
+          <div className="livepill"><div className="dot"/>LIVE</div>
+          <div className="nusr">// <b>{user.username}</b></div>
+          <button className="bout" onClick={logout}>LOGOUT</button>
+        </div>
+      </nav>
+      <div className="shell">
+        <div className="side">
+          <div className="ssec">NAVIGATION</div>
+          {navItems.map(item=>(
+            <div key={item.id} className={`si ${page===item.id?'on':''}`} onClick={()=>setPage(item.id)}>
+              <span className="si-ic">{item.ic}</span><span>{item.l}</span>
+              {item.badge&&<span className="sibadge">{item.badge}</span>}
+            </div>
+          ))}
+          <div className="ssec" style={{marginTop:'18px'}}>SYSTEM</div>
+          <div className="sfoot"><p><b>ECOCORE AI v6</b><br/>Team EcoOptimizer<br/>MMIT Pune<br/>April 2026</p></div>
+        </div>
+        <div className="content">
+          {page==='dash'&&<Analyze token={user.token}/>}
+          {page==='factories'&&<Factories/>}
+          {page==='carbon'&&<CarbonCredits/>}
+          {page==='machines'&&<Machines/>}
+          {page==='reports'&&<Reports token={user.token}/>}
+          {page==='settings'&&<Settings/>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
